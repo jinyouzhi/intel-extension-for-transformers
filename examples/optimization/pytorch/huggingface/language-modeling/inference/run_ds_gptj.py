@@ -6,6 +6,7 @@ import time
 import os
 import sys
 import argparse
+import deepspeed
 
 
 # args
@@ -44,8 +45,10 @@ model = model.eval()
 
 # to channels last
 model = model.to(memory_format=torch.channels_last)
-# to ipex
-model = ipex.optimize(model, dtype=amp_dtype, inplace=True)
+#model = ipex.optimize(model, dtype=amp_dtype, inplace=True)
+
+engine = deepspeed.init_inference(model=model, mp_size=1, dtype=torch.bfloat16, replace_with_kernel_inject=False)
+model = engine.module
 
 # input prompt
 # prompt = "Once upon a time,"
@@ -57,6 +60,15 @@ prompt = "Once upon a time, there existed a little girl, who liked to have adven
 total_time = 0.0
 num_iter = 10
 num_warmup = 3
+#for i in range(num_iter):
+#    tic = time.time()
+#    input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+#    gen_tokens = model.generate(input_ids, max_new_tokens=args.max_new_tokens, **generate_kwargs)
+#    gen_text = tokenizer.batch_decode(gen_tokens)[0]
+#    toc = time.time()
+#    print(gen_text, flush=True)
+#    if i >= num_warmup:
+#        total_time += (toc - tic)
 with torch.cpu.amp.autocast(enabled=amp_enabled, dtype=amp_dtype):
     for i in range(num_iter):
         tic = time.time()
