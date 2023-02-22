@@ -48,7 +48,10 @@ model = model.eval()
 model = model.to(memory_format=torch.channels_last)
 #model = ipex.optimize(model, dtype=amp_dtype, inplace=True)
 
-engine = deepspeed.init_inference(model=model, mp_size=2, dtype=torch.bfloat16, replace_with_kernel_inject=False)
+ds_local_rank = int(os.getenv('LOCAL_RANK', '0'))
+ds_world_size = int(os.getenv('WORLD_SIZE', '0'))
+
+engine = deepspeed.init_inference(model=model, mp_size=ds_world_size, dtype=torch.bfloat16, replace_with_kernel_inject=False)
 model = engine.module
 
 # input prompt

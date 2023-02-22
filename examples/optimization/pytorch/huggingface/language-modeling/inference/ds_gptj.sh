@@ -1,4 +1,4 @@
-export OMP_NUM_THREADS=104
+export OMP_NUM_THREADS=56
 export LD_PRELOAD=${LD_PRELOAD}:${CONDA_PREFIX}/lib/libiomp5.so
 
 export LD_PRELOAD=${LD_PRELOAD}:${CONDA_PREFIX}/lib/libjemalloc.so
