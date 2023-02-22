@@ -13,9 +13,10 @@ import deepspeed
 parser = argparse.ArgumentParser('GPT-J generation script', add_help=False)
 parser.add_argument('--precision', default='bf16', type=str, help="fp32 or bf16")
 parser.add_argument('--max-new-tokens', default=32, type=int, help="output max new tokens")
+parser.add_argument('--local_rank', default=None, type=int, help="local rank")
 parser.add_argument('--greedy', action='store_true')
 args = parser.parse_args()
-print(args)
+print("args={}".format(args))
 
 amp_enabled = True if args.precision != "fp32" else False
 amp_dtype = torch.bfloat16 if args.precision != "fp32" else torch.float32
@@ -47,7 +48,7 @@ model = model.eval()
 model = model.to(memory_format=torch.channels_last)
 #model = ipex.optimize(model, dtype=amp_dtype, inplace=True)
 
-engine = deepspeed.init_inference(model=model, mp_size=1, dtype=torch.bfloat16, replace_with_kernel_inject=False)
+engine = deepspeed.init_inference(model=model, mp_size=2, dtype=torch.bfloat16, replace_with_kernel_inject=False)
 model = engine.module
 
 # input prompt
