@@ -39,7 +39,7 @@ else:
 if os.path.exists(model_id_offline_token):
     tokenizer = AutoTokenizer.from_pretrained(model_id_offline_token)
 else:
-    tokenizer = AutoTokenizer.from_pretrained(model_id_online_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_id_online)
     tokenizer.save_pretrained(model_id_offline_token)
 
 model = model.eval()
