@@ -83,12 +83,16 @@ with torch.xpu.amp.autocast(enabled=amp_enabled, dtype=amp_dtype):
         input_ids = input_ids.to(get_accelerator().current_device_name())
         print("inputs device:", input_ids.device)
         print("model device:", model.device)
-        gen_tokens = model.generate(input_ids, max_new_tokens=args.max_new_tokens, **generate_kwargs)
+        prof_enabled = True if i == num_iter - 1 else False
+        with torch.autograd.profiler_legacy.profile(enabled=prof_enabled, use_xpu=True) as prof:
+            gen_tokens = model.generate(input_ids, max_new_tokens=args.max_new_tokens, **generate_kwargs)
         gen_text = tokenizer.batch_decode(gen_tokens)[0]
         toc = time.time()
         print(gen_text, flush=True)
         if i >= num_warmup:
             total_time += (toc - tic)
+        if prof_enabled:
+            print(prof.key_averages().table(sort_by=f"self_{get_accelerator().device_name()}_time_total", row_limit=-1))
 
 print("Inference latency: %.3f ms." % (total_time / (num_iter - num_warmup) * 1000))
 
