@@ -7,6 +7,7 @@ import os
 import sys
 import argparse
 import deepspeed
+from deepspeed.accelerator.real_accelerator import get_accelerator
 
 
 # args
@@ -43,6 +44,8 @@ else:
     tokenizer.save_pretrained(model_id_offline_token)
 
 model = model.eval()
+print("current device:", get_accelerator().current_device_name())
+print("model device:", model.device)
 
 # to channels last
 model = model.to(memory_format=torch.channels_last)
@@ -73,10 +76,13 @@ num_warmup = 3
 #    print(gen_text, flush=True)
 #    if i >= num_warmup:
 #        total_time += (toc - tic)
-with torch.cpu.amp.autocast(enabled=amp_enabled, dtype=amp_dtype):
+with torch.xpu.amp.autocast(enabled=amp_enabled, dtype=amp_dtype):
     for i in range(num_iter):
         tic = time.time()
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        input_ids = input_ids.to(get_accelerator().current_device_name())
+        print("inputs device:", input_ids.device)
+        print("model device:", model.device)
         gen_tokens = model.generate(input_ids, max_new_tokens=args.max_new_tokens, **generate_kwargs)
         gen_text = tokenizer.batch_decode(gen_tokens)[0]
         toc = time.time()
